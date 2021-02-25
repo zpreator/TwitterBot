@@ -22,7 +22,7 @@ value = random.choice(values)
 tweet = key.split(' ')[0]
 print('trying: ', key, value)
 newKey = key.split(' ')[1] + ' ' + value
-for j in range(30):
+for j in range(50):
     tweet += ' ' + newKey.split(' ')[0]
     # print(newKey)
 

@@ -23,16 +23,16 @@ except:
 
 # api.update_profile(description="I like Python")
 # userID = '@elonmusk'
-userID = '@BoredElonMusk'
+# userID = '@BoredElonMusk'
 # userID = '@MKBHD'
 # userID = '@SnazzyQ'
 # userID = '@ericandre'
 # userID = '@billburr'
-# userID = '@VancityReynolds'
+userID = '@VancityReynolds'
 
 # filename = 'elonText.json'
-filename = 'techGuys.json'
-# filename = 'comediansText.json'
+# filename = 'techGuys.json'
+filename = 'comediansText.json'
 
 olMusky = api.get_user(userID)
 
