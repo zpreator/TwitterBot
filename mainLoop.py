@@ -39,11 +39,12 @@ def main():
     api = create_api()
     loop = True
     since_id = readConfig()
-    while True:
-        since_id = checkForTweets(api, since_id)
-        logger.info("Waiting...")
-        time.sleep(60)
-        loop = False
+    parseTweets(api, '@elonmusk')
+    # while True:
+    #     since_id = checkForTweets(api, since_id)
+    #     logger.info("Waiting...")
+    #     time.sleep(60)
+    #     loop = False
 
 if __name__ == "__main__":
     main()

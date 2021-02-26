@@ -45,33 +45,33 @@ def parseTweets(api, userID):
     # user = api.get_user(userID)
 
     # https://fairyonice.github.io/extract-someones-tweet-using-tweepy.html
-    tweets = api.user_timeline(screen_name=userID, 
-                            # 200 is the maximum allowed count
-                            count=200,
-                            include_rts = False,
-                            # Necessary to keep full_text 
-                            # otherwise only the first 140 words are extracted
-                            tweet_mode = 'extended'
-                            )
-    all_tweets = []
-    all_tweets.extend(tweets)
-    oldest_id = tweets[-1].id
-    while True:
-        tweets = api.user_timeline(screen_name=userID, 
-                            # 200 is the maximum allowed count
-                            count=200,
-                            include_rts = False,
-                            max_id = oldest_id - 1,
-                            # Necessary to keep full_text 
-                            # otherwise only the first 140 words are extracted
-                            tweet_mode = 'extended'
-                            )
-        if len(tweets) == 0:
-            break
-        oldest_id = tweets[-1].id
-        all_tweets.extend(tweets)
-        # print('N of tweets downloaded till now {}'.format(len(all_tweets)))
-
+    # tweets = api.user_timeline(screen_name=userID, 
+    #                         # 200 is the maximum allowed count
+    #                         count=200,
+    #                         include_rts = False,
+    #                         # Necessary to keep full_text 
+    #                         # otherwise only the first 140 words are extracted
+    #                         tweet_mode = 'extended'
+    #                         )
+    # all_tweets = []
+    # all_tweets.extend(tweets)
+    # oldest_id = tweets[-1].id
+    # while True:
+    #     tweets = api.user_timeline(screen_name=userID, 
+    #                         # 200 is the maximum allowed count
+    #                         count=200,
+    #                         include_rts = False,
+    #                         max_id = oldest_id - 1,
+    #                         # Necessary to keep full_text 
+    #                         # otherwise only the first 140 words are extracted
+    #                         tweet_mode = 'extended'
+    #                         )
+    #     if len(tweets) == 0:
+    #         break
+    #     oldest_id = tweets[-1].id
+    #     all_tweets.extend(tweets)
+    #     # print('N of tweets downloaded till now {}'.format(len(all_tweets)))
+    all_tweets = queryUserTweets(api, userID, 50)
     filename = str(userID) + '.json'
     dictionary = tp.readJson(filename)
     for info in all_tweets:
@@ -79,3 +79,42 @@ def parseTweets(api, userID):
 
     tp.saveJson(filename, dictionary)
     return filename
+
+def queryUserTweets(api, userID, num_tweets = None, oldest_id = None):
+    """ Query for tweets from specified user
+    Inputs:
+        - api: tweepy api object
+        - userID: string specified user
+        - num_tweets: int number of tweets to get, default is None
+                    for all tweets
+        - since_id: int optional time id to grab tweets since_id
+    Returns:
+        - tweets: list of tweepy tweet objects"""
+    loop = True
+    if num_tweets < 200:
+        count = num_tweets
+        loop = False
+    else:
+        count = 200
+
+    if oldest_id is not None:
+        max_id = oldest_id - 1
+
+    all_tweets = []
+    while True:
+        # https://fairyonice.github.io/extract-someones-tweet-using-tweepy.html
+        tweets = api.user_timeline(screen_name=userID, 
+                                # 200 is the maximum allowed count
+                                count=count,
+                                include_rts = False,
+                                max_id = max_id,
+                                # Necessary to keep full_text 
+                                # otherwise only the first 140 words are extracted
+                                tweet_mode = 'extended'
+                                )
+        if len(tweets) == 0 or not loop:
+            break
+        all_tweets.extend(tweets)
+        oldest_id = tweets[-1].id
+        max_id = oldest_id
+    return all_tweets
