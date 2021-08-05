@@ -80,7 +80,8 @@ def parseTweets(api, userID):
     tp.saveJson(filename, dictionary)
     return filename
 
-def queryUserTweets(api, userID, num_tweets = None, oldest_id = None):
+
+def queryUserTweets(api, userID, num_tweets=None, oldest_id=None):
     """ Query for tweets from specified user
     Inputs:
         - api: tweepy api object

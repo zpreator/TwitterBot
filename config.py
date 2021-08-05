@@ -1,15 +1,33 @@
-import tweepy
+# Standard python imports
 import logging
 import os
 import configparser
 
-logger = logging.getLogger()
+# Third party imports
+import praw
+import prawcore.exceptions
+import tweepy
+from groupy.client import Client
 
-def create_api():
-    consumer_key = "74jGD0Q8cvgcTjNbJg9q5ZUAL"
-    consumer_secret = "6EuCVQPINXKYsNj8LTe9WcDejWtaatlSQtRIL3zzCrcXMAiVCU"
-    access_token = "834474582748770304-ykpXhsF8HhQE9jMqBzO5VX27oggXXFH"
-    access_token_secret = "6oJuIacK3maUJllKXV2WErmB7QAcnYr8pjtNUEwszphG8"
+
+def create_groupme_api():
+    keys = readKeys()
+    groupme_key = keys['groupme']['access_token']
+    client = Client.from_token(groupme_key)
+    groups = list(client.groups.list_all())
+    for group in groups:
+        print(group.name)
+        if group.name == 'Large Fry Larrys':
+            lfl = group
+    return lfl
+
+
+def create_twitter_api():
+    keys = readKeys()
+    consumer_key = keys['twitter']['consumer_key']
+    consumer_secret = keys['twitter']['consumer_secret']
+    access_token = keys['twitter']['access_token']
+    access_token_secret = keys['twitter']['access_token_secret']
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
@@ -18,14 +36,41 @@ def create_api():
     try:
         api.verify_credentials()
     except Exception as e:
-        logger.error("Error creating API", exc_info=True)
+        print("Error creating API", e)
         raise e
-    logger.info("API created")
     return api
 
-def readConfig():
+
+def create_reddit_api():
+    keys = readKeys()
+    personal = keys['reddit']['personal']
+    secret   = keys['reddit']['secret']
+    username = keys['reddit']['username']
+    password = keys['reddit']['password']
+    user_agent = keys['reddit']['user_agent']
+
+    reddit_api = praw.Reddit(client_id=personal,
+                             client_secret=secret,
+                             user_agent=user_agent,
+                             username=username,
+                             password=password)
+    reddit_api.read_only = True
+    try:
+        me = reddit_api.user.me()
+        return reddit_api
+    except prawcore.exceptions.ResponseException:
+        print('Something went wrong with authentication')
+        return None
+
+
+def readKeys():
     config = configparser.ConfigParser()
-    config.read('data.ini')
+    config.read('keys.ini')
+    return config
+
+def readConfig(file='data.ini'):
+    config = configparser.ConfigParser()
+    config.read(file)
     return config.get('default', 'since_id')
 
 def setConfig(since_id):

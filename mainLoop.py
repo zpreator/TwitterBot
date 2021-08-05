@@ -1,6 +1,6 @@
 import tweepy
 import logging
-from config import create_api, setConfig, readConfig
+from config import create_twitter_api, setConfig, readConfig
 from parseTweets import parseTweets
 from generateTweet import generateTweet
 import time
@@ -36,7 +36,7 @@ def checkForTweets(api, maxTime):
     return maxTime
 
 def main():
-    api = create_api()
+    api = create_twitter_api()
     loop = True
     since_id = readConfig()
     parseTweets(api, '@elonmusk')

@@ -66,9 +66,11 @@ def readJson(path):
         print(e)
         return {}
 
+
 def saveJson(path, dictionary):
     with open(path, 'w+') as f:
         json.dump(dictionary, f)
+
 
 def parseString(text, dictionary):
     words = text.replace('.', '').replace(',', '').replace(':', '').replace(';', '').split(' ')
