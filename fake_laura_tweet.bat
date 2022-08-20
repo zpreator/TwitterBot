@@ -6,7 +6,8 @@ cd %this_directory%
 
 call venv\scripts\activate
 
-powershell.exe "python main.py"
+
+powershell.exe "python main.py" >> "C:\Users\User\PycharmProjects\TwitterBot\log.txt"
 
 call deactivate
 

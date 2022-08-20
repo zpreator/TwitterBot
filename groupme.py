@@ -270,12 +270,30 @@ def like_all_messages(group):
             message.like()
 
 
+def get_all_messages(group):
+    full_text = ''
+    lines = []
+    print('Extracting..')
+    for message in group.messages.list_all():
+        if 'system' not in message.data['sender_id']:
+            message_text = message.data['text']
+            if message_text is not None:
+                full_text += message_text + '. '
+                lines.append('{0}\n'.format(message_text.replace('\n', ' ')))
+
+    print('Writing..')
+    with open('groupme_response.txt', 'w', encoding='utf-8') as file:
+        file.writelines(lines)
+
+
 def main():
     group = create_groupme_api()
-    daily_best = group.leaderboard.list_day()
-    weekly_best = group.leaderboard.list_week()
-    my_best = group.leaderboard.list_for_me()
-    like_all_messages(group)
+    # daily_best = group.leaderboard.list_day()
+    # weekly_best = group.leaderboard.list_week()
+    # my_best = group.leaderboard.list_for_me()
+    # like_all_messages(group)
+    get_all_messages(group)
+
 
 if __name__ == '__main__':
     main()
