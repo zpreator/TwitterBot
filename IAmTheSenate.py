@@ -25,6 +25,24 @@ def text_cleaner(text):
     return text
 
 
+def clean_text(text):
+    text = text.lower().replace(' n\'t', 'n\'t')
+    text = text.lower().replace(' \'s', '\'s')
+    text = text.lower().replace('\' ', '\'')
+    text = text.lower().replace(' \'', '\'')
+    text = text.lower().replace('gon na', 'gonna')
+    text = text.replace('@', '')
+    text = text.lower().replace('  ', ' ')
+    for punc in ['\\.', '\\?', '\\:', '\\;', '\\,', '\\!', ]:
+        text = text.lower().replace(f' {punc[-1]}', f'{punc[-1]}')
+        search_str = punc[-2:] + r'(?!\s|$)'
+        results = re.finditer(search_str, text)
+        for result in results:
+            index = result.end()
+            if index > 0 and text[index] != text[index-1]:
+                text = text[:index] + ' ' + text[index:]
+    return text
+
 def general_kenobi(text, state_size=2):
     """ Returns a Markovify.Text object that has been filtered through a NLP.
 

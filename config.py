@@ -7,32 +7,31 @@ import configparser
 import praw
 import prawcore.exceptions
 import tweepy
-from groupy.client import Client
+# from groupy.client import Client
 
 
-def create_groupme_api():
-    keys = readKeys()
-    groupme_key = keys['groupme']['access_token']
-    client = Client.from_token(groupme_key)
-    groups = list(client.groups.list_all())
-    for group in groups:
-        print(group.name)
-        if group.name == 'Large Fry Larrys':
-            lfl = group
-    return lfl
+# def create_groupme_api():
+#     keys = readKeys()
+#     groupme_key = keys['groupme']['access_token']
+#     client = Client.from_token(groupme_key)
+#     groups = list(client.groups.list_all())
+#     for group in groups:
+#         print(group.name)
+#         if group.name == 'Large Fry Larrys':
+#             lfl = group
+#     return lfl
 
 
 def create_twitter_api():
     keys = readKeys()
-    consumer_key = keys['twitter']['consumer_key']
-    consumer_secret = keys['twitter']['consumer_secret']
+    consumer_key = keys['twitter']['api_key']
+    consumer_secret = keys['twitter']['api_key_secret']
     access_token = keys['twitter']['access_token']
     access_token_secret = keys['twitter']['access_token_secret']
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tweepy.API(auth, wait_on_rate_limit=True, 
-        wait_on_rate_limit_notify=True)
+    api = tweepy.API(auth, wait_on_rate_limit=True)
     try:
         api.verify_credentials()
     except Exception as e:

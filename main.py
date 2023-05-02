@@ -1,4 +1,4 @@
-from IAmTheSenate import general_kenobi, load_model
+from IAmTheSenate import general_kenobi, load_model, clean_text
 import config
 import twitter
 import os
@@ -11,7 +11,7 @@ print(datetime.datetime.today().day)
 def fake_laura_tweet():
     twitter_api = config.create_twitter_api()
 
-    if datetime.datetime.today().day == 4:
+    if datetime.datetime.today().weekday() == 5:
         tweets = twitter.get_tweet_text(twitter_api, '@laurarawra', 3000)
         laura_text = ''
         for tweet in tweets:
@@ -21,6 +21,7 @@ def fake_laura_tweet():
     else:
         hello_there = load_model('marko_model.json')
     bot_tweet = hello_there.make_short_sentence(280)
+    bot_tweet = clean_text(bot_tweet)
     twitter_api.update_status(bot_tweet)
     print(bot_tweet)
 
