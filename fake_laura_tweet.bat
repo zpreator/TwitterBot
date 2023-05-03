@@ -7,7 +7,7 @@ cd %this_directory%
 call venv\scripts\activate
 
 
-powershell.exe "python main.py" >> "C:\Users\zacha\PycharmProjects\TwitterBot\log.txt"
+powershell.exe "python examples/auto_tweet.py" >> "resources/temp/auto_tweet_log.txt"
 
 call deactivate
 

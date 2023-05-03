@@ -1,9 +1,7 @@
-import tweepy
 import logging
-from config import create_twitter_api, setConfig, readConfig
+from src.twitter_bot.config import create_twitter_api, set_config, read_config
 from parseTweets import parseTweets
 from generateTweet import generateTweet
-import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -32,13 +30,13 @@ def checkForTweets(api, maxTime):
     if not newMessages:
         print('No new messages')
     maxTime = max(times)
-    setConfig(maxTime)
+    set_config(maxTime)
     return maxTime
 
 def main():
     api = create_twitter_api()
     loop = True
-    since_id = readConfig()
+    since_id = read_config()
     parseTweets(api, '@elonmusk')
     # while True:
     #     since_id = checkForTweets(api, since_id)
