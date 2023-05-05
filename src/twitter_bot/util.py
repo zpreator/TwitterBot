@@ -6,6 +6,9 @@ from keras.utils import pad_sequences
 from typing import List
 import numpy as np
 from keras.preprocessing.text import Tokenizer
+from happytransformer import HappyTextToText, TTSettings
+happy_tt = HappyTextToText("T5",  "prithivida/grammar_error_correcter_v1")
+settings = TTSettings(do_sample=True, top_k=10, temperature=0.5,  min_length=1, max_length=100)
 
 
 def parseTweets(api, userID):
@@ -57,7 +60,7 @@ def query_user_tweets(api, userID, num_tweets=None, oldest_id=None):
     else:
         max_id = get_max_id(api, userID)
     all_tweets = []
-    while loop:
+    while True:
         # https://fairyonice.github.io/extract-someones-tweet-using-tweepy.html
         tweets = api.user_timeline(screen_name=userID,
                                 # 200 is the maximum allowed count
@@ -74,6 +77,8 @@ def query_user_tweets(api, userID, num_tweets=None, oldest_id=None):
         all_tweets.extend(tweets)
         oldest_id = tweets[-1].id
         max_id = oldest_id
+        if not loop:
+            break
     print('Tweets read: ', len(all_tweets))
     return all_tweets
 
@@ -94,10 +99,10 @@ def read_json(path):
                 return dictionary
         else:
             save_json(path, {})
-            return {}
+            return str({})
     except Exception as e:
         print(e)
-        return {}
+        return str({})
 
 
 def save_json(path, dictionary):
@@ -223,12 +228,37 @@ def save_txt(text, path):
         file.write(text)
 
 
-def tokenize(texts, vocab_size=10000):
+def tokenize(texts, vocab_size=10000, char_level=False):
     # Create vocabulary
-    tokenizer = Tokenizer(num_words=vocab_size)
+    tokenizer = Tokenizer(num_words=vocab_size, char_level=char_level)
     tokenizer.fit_on_texts(texts)
     if len(tokenizer.word_index) < vocab_size:
         vocab_size = len(tokenizer.word_index)
-        tokenizer = Tokenizer(num_words=vocab_size)
+        tokenizer = Tokenizer(num_words=vocab_size, char_level=char_level)
         tokenizer.fit_on_texts(texts)
     return tokenizer
+
+
+def generate_text(seed, model, tokenizer, num_words=None, num_chars=None):
+    sentence = seed
+    if num_words is not None:
+        for _ in range(num_words):
+            new_word = predict_next_word(sentence, model, tokenizer)
+            sentence += ' ' + new_word
+    elif num_chars is not None:
+        while len(sentence) < num_chars:
+            new_word = predict_next_word(sentence, model, tokenizer)
+            sentence += ' ' + new_word
+    else:
+        raise Exception('Pass either num_words or num_chars')
+    return happy_tt.generate_text("gec:" + sentence, args=settings).text.capitalize()
+
+
+def predict_next_word(seed, model, tokenizer, max_len=30):
+    input_seq = tokenizer.texts_to_sequences([seed])[0]
+    word_index = tokenizer.word_index
+    x = pad_sequences([input_seq], maxlen=max_len)
+    y_pred = model.predict(x)[0]
+    next_word_idx = np.random.choice(len(y_pred), size=1, p=y_pred)
+    next_word = list(word_index.keys())[list(word_index.values()).index(next_word_idx)]
+    return next_word

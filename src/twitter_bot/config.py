@@ -3,8 +3,9 @@ import os
 
 import tweepy
 
-LAST_TWEET_INFO_PATH = r'../resources/temp/data.ini'
-KEYS_PATH = r'../resources/keys.ini'
+PROJECT_PATH = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
+LAST_TWEET_INFO_PATH = os.path.join(PROJECT_PATH, 'resources', 'temp', 'data.ini')
+KEYS_PATH = os.path.join(PROJECT_PATH, 'resources', 'keys.ini')
 
 
 def create_twitter_api(consumer_key=None, consumer_secret=None, access_token=None, access_token_secret=None):

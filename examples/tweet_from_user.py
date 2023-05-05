@@ -6,4 +6,4 @@ if __name__ == '__main__':
     bot.load_model()
     print('Generating a word: ', bot.generate_word())
     print('Generating a sentence: ', bot.generate_sentence())
-    print('Reading tweets: ', bot.read_tweets())
+    print('Reading tweets: ', bot.get_tweets())

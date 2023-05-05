@@ -105,9 +105,10 @@ classifiers = [  # Optional
 dependencies = [ # Optional
   "tensorflow",
   "spacy",
-  "happtransformer",
+  "happytransformer",
   "scikit-learn",
-  "markovify"
+  "markovify",
+  "tweepy"
 ]
 
 # List additional groups of dependencies here (e.g. development

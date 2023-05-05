@@ -6,15 +6,16 @@ from twitter_bot.config import create_twitter_api
 from twitter_bot.lstm import LSTMModel
 from twitter_bot.markov import MarkovModel
 
-
-MODELS_FOLDER = r'../resources/models'
-DATASETS_FOLDER = r'../resources/datasets'
+PROJECT_PATH = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
+MODELS_FOLDER = os.path.join(PROJECT_PATH, 'resources', 'models')
+DATASETS_FOLDER = os.path.join(PROJECT_PATH, 'resources', 'datasets')
 
 
 class TwitterBot:
     def __init__(self,
                  user_id,
                  model_name=None,
+                 char_level=False,
                  consumer_key=None,
                  consumer_secret=None,
                  access_token=None,
@@ -24,13 +25,15 @@ class TwitterBot:
                                       access_token,
                                       access_token_secret)
         self.user_id = user_id
+        self.char_level = char_level
         self.model = None
         self.tokenizer = None
         if model_name is None:
             model_name = user_id.replace('@', '')
         self.model_name = model_name
         self.model_path = os.path.join(MODELS_FOLDER, self.model_name)
-        self.tokenizer_path = os.path.join(MODELS_FOLDER, self.model_name + '.tokenizer')
+        os.makedirs(self.model_path, exist_ok=True)
+        self.tokenizer_path = os.path.join(self.model_path, 'tokenizer.pkl')
         self.corpus_path = os.path.join(DATASETS_FOLDER, self.model_name + '.txt')
 
     def __repr__(self):
@@ -42,14 +45,14 @@ class TwitterBot:
             self.model = LSTMModel(self.tokenizer)
         else:
             self.model = MarkovModel()
-        if os.path.exists(self.model_path):
+        try:
             self.model.load_model(self.model_path)
-        else:
+        except Exception:
             raise Exception('The twitter bot must be trained before the model can be loaded')
 
-    def train_model(self, pull_tweets=False, model_type='lstm', **kwargs):
+    def train_model(self, pull_tweets=False, model_type='lstm', char_level=False, **kwargs):
         text = self._get_text(pull_tweets)
-        self.tokenize()
+        self.tokenize(char_level=char_level)
         if model_type == 'lstm':
             self.model = LSTMModel(self.tokenizer)
         else:
@@ -59,7 +62,7 @@ class TwitterBot:
 
     def _get_text(self, pull_tweets=False):
         if pull_tweets:
-            tweets = self.read_tweets()
+            tweets = self.get_tweets()
             text = '. '.join(tweets)
             save_txt(text, self.corpus_path)
         elif os.path.exists(self.corpus_path):
@@ -68,15 +71,41 @@ class TwitterBot:
             raise Exception('Either the path to a .txt file must be valid, or pull_tweets should be true')
         return text
 
-    def tokenize(self, pull_tweets=False):
+    def tokenize(self, pull_tweets: bool = False, char_level: bool = False) -> None:
+        """ Sets up the tokenize object class variable and saves a copy of the tokenizer
+
+        Args:
+            pull_tweets: should the model pull new tweets to tokenize
+            char_level: tokenize on a character level instead of word level
+
+        Returns:
+
+        """
         texts = self._get_text(pull_tweets).split('.')
-        self.tokenizer = tokenize(texts)
+        self.tokenizer = tokenize(texts, char_level=char_level)
         save_tokenizer(self.tokenizer, self.tokenizer_path)
 
-    def read_tweets(self):
-        return get_tweet_text(self.api, self.user_id)
+    def get_tweets(self, num_tweets: int = 10) -> list[str]:
+        """ Gets tweets from the user starting from the most recent
 
-    def generate_sentence(self, num_chars=280, num_words=None, seed=None):
+        Args:
+            num_tweets: Number of tweets to get
+
+        Returns:
+            list[str]
+        """
+        return get_tweet_text(self.api, self.user_id, num_tweets=num_tweets)
+
+    def generate_sentence(self, num_chars: int = 280, seed: str = None) -> str:
+        """ Generates a random sentence based on the selected model (self.model)
+
+        Args:
+            num_chars (optional): number of characters to limit the sentence to
+            seed (optional): beginning string to kick things off
+
+        Returns:
+            str
+        """
         if self.model is not None:
             if seed is None:
                 seed = self.generate_word()
@@ -84,7 +113,12 @@ class TwitterBot:
         else:
             raise Exception('You need to train or load a model before being able to generate a sentence')
 
-    def generate_word(self):
+    def generate_word(self) -> str:
+        """ Picks a random word from the users twitter vocabulary
+
+        Returns:
+            str
+        """
         if self.tokenizer is None:
             if os.path.exists(self.tokenizer_path):
                 self.tokenizer = load_tokenizer(self.tokenizer_path)
@@ -99,6 +133,16 @@ class TwitterBot:
     def tweet(self, text):
         self.api.update_status(text)
 
-    def tweet_random_sentence(self, seed=None, num_chars=280):
+    def tweet_random_sentence(self, seed: str = None, num_chars: int = 280) -> None:
+        """ Generates a random sentence and then posts it on Twitter
+
+        Args:
+            seed (optional): beginning string to kick things off
+            num_chars (optional): number of characters to limit the sentence to
+
+        Returns:
+
+        """
         sentence = self.generate_sentence(num_chars=num_chars, seed=seed)
+        print(sentence)
         self.api.update_status(sentence)
