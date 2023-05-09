@@ -1,9 +1,8 @@
 # TwitterBot
-Robot for twitter
 
-Beep Beep Boop
+Twitter bot that emulates a user
 
-<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Only regret of getting married is that I never have to wear pants .</p>&mdash; Laura Bot (@fake_laurarawra) <a href="https://twitter.com/fake_laurarawra/status/1654326367423717376?ref_src=twsrc%5Etfw">May 5, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+![twitter image](resources/images/example1.png)
 
 The TwitterBot class provides an easy method to connect to the twitter API via Tweepy and emulate a user. Methods used to model the language are
 1. Markov
@@ -25,7 +24,7 @@ The primary packages are the following (some of which are smaller projects, like
    - consumer_secret
    - access_token
    - access_token_secret
-4. Create a file named 'keys.ini'
+4. Create a file named 'keys.ini' (optional)
 
 
 ```ini
@@ -46,18 +45,45 @@ python -m spacy download en_core_web_sm
 ```
 
 # Usage
+
+Create a TwitterBot object using a username and keys.ini file. The keys in the file should be linked to the account which the bot will be tweeting from.
+The username passed into the constructor is the username of the tweeter you would like to emulate.
 ```python
 from twitter_bot import TwitterBot
 
 if __name__ == '__main__':
-    bot = TwitterBot('@<twitter-username>')
-    bot.train_model(pull_tweets=True, model_type='markov')  # This may take some time
-    # bot.load_model('markov')  # The model is stored when trained and can be loaded
+    access_token = ""
+    access_token_secret = ""
+    api_key = ""
+    api_key_secret = ""
+    bot = TwitterBot('@laurarawra',
+                     access_token=access_token,
+                     access_token_secret=access_token_secret,
+                     api_key=api_key,
+                     api_key_secret=api_key_secret)
+    bot.train_model(pull_tweets=True, model_type='markov')
+    # bot.load_model(model_path='c:/path/to/model', model_type='markov')  # The model is stored when trained and can be loaded
     print('Generating a word: ', bot.generate_word())
     print('Generating a sentence: ', bot.generate_sentence())
     print('Reading tweets: ', bot.get_tweets())
     print('Tweeting message: ', bot.tweet_random_sentence())
 ```
+
+Same thing, except this time using a .ini file to store the keys.
+```python
+from twitter_bot import TwitterBot
+
+if __name__ == '__main__':
+    bot = TwitterBot('@<twitter-username>', keys_path='c:/path/to/keys.ini')
+    bot.train_model(save_path='c:/path/to/model', pull_tweets=True, model_type='markov')  # This may take some time
+    # bot.load_model(model_path='c:/path/to/model', model_type='markov')  # The model is stored when trained and can be loaded
+    print('Generating a word: ', bot.generate_word())
+    print('Generating a sentence: ', bot.generate_sentence())
+    print('Reading tweets: ', bot.get_tweets())
+    print('Tweeting message: ', bot.tweet_random_sentence())
+```
+
+
 
 # Advanced Usage
 

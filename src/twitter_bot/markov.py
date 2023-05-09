@@ -28,7 +28,7 @@ class MarkovModel:
         return bot_tweet
 
     def predict_next_word(self, seed):
-        return self.model.make_sentence_with_start(' '.join(seed), max_words=(len(seed) + 1))
+        return self.model.make_sentence_with_start(seed, max_words=1)
 
 
 

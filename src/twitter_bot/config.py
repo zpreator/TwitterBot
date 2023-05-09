@@ -1,20 +1,19 @@
 import configparser
 import os
+import tempfile
 
 import tweepy
 
-PROJECT_PATH = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
-LAST_TWEET_INFO_PATH = os.path.join(PROJECT_PATH, 'resources', 'temp', 'data.ini')
-KEYS_PATH = os.path.join(PROJECT_PATH, 'resources', 'keys.ini')
+LAST_TWEET_INFO_PATH = os.path.join(tempfile.gettempdir(), 'latest_tweet.ini')
 
 
-def create_twitter_api(api_key=None, api_key_secret=None, access_token=None, access_token_secret=None):
-    if not os.path.exists(KEYS_PATH):
+def create_twitter_api(api_key=None, api_key_secret=None, access_token=None, access_token_secret=None, keys_path=None):
+    if keys_path is None or not os.path.exists(keys_path):
         if not all([api_key, api_key_secret, access_token, access_token_secret]):
             raise Exception('Either pass in the keys and tokens, or create a file called '
                             '"keys.ini" in the resources folder')
     else:
-        keys = read_keys()
+        keys = read_keys(keys_path)
         api_key = keys['twitter']['api_key']
         api_key_secret = keys['twitter']['api_key_secret']
         access_token = keys['twitter']['access_token']
@@ -31,9 +30,9 @@ def create_twitter_api(api_key=None, api_key_secret=None, access_token=None, acc
     return api
 
 
-def read_keys():
+def read_keys(keys_path):
     config = configparser.ConfigParser()
-    config.read(KEYS_PATH)
+    config.read(keys_path)
     return config
 
 

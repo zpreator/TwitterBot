@@ -7,19 +7,22 @@ from twitter_bot.config import create_twitter_api
 from twitter_bot.lstm import LSTMModel
 from twitter_bot.markov import MarkovModel
 from twitter_bot.gru import GRUModel
+from twitter_bot.combo import ComboModel
 
 
 class TwitterBot:
     def __init__(self,
                  user_id,
+                 keys_path=None,
                  api_key=None,
                  api_key_secret=None,
                  access_token=None,
                  access_token_secret=None):
-        self.api = create_twitter_api(api_key,
-                                      api_key_secret,
-                                      access_token,
-                                      access_token_secret)
+        self.api = create_twitter_api(api_key=api_key,
+                                      api_key_secret=api_key_secret,
+                                      access_token=access_token,
+                                      access_token_secret=access_token_secret,
+                                      keys_path=keys_path)
         self.user_id = user_id
         self.model = None
         self.tokenizer = None
@@ -40,6 +43,10 @@ class TwitterBot:
         elif model_type.lower() == 'markov':
             self.model = MarkovModel()
             ext = '.json'
+        elif model_type.lower() == 'combo':
+            self.model = ComboModel(self.tokenizer)
+            self.model.load_model(model_path)
+            return
         else:
             raise Exception('Please pass in either lstm, gru or markov')
         if os.path.isdir(model_path):
@@ -70,6 +77,11 @@ class TwitterBot:
         elif model_type.lower() == 'markov':
             self.model = MarkovModel()
             ext = '.json'
+        elif model_type.lower() == 'combo':
+            self.model = ComboModel(self.tokenizer)
+            self.model.fit(text, **kwargs)
+            self.model.save(save_path)
+            return
         else:
             raise Exception('Please pass in either lstm, gru or markov')
         self.model.fit(text, **kwargs)
@@ -165,4 +177,4 @@ class TwitterBot:
         """
         sentence = self.generate_sentence(num_chars=num_chars, seed=seed)
         print(sentence)
-        # self.api.update_status(sentence)
+        self.api.update_status(sentence)

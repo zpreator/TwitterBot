@@ -17,13 +17,13 @@ class ComboModel:
         self.vocab_size = len(tokenizer.word_index)
         self.tokenizer = tokenizer
 
-    def fit(self, texts, embedding_dim=50, rnn_units=150, batch_size=32, num_epochs=10, markov_state_size=2):
+    def fit(self, texts, embedding_dim=50, rnn_units=150, batch_size=32, num_epochs=10):
         markov_text = texts
         if type(texts) == list:
             markov_text = '.'.join(texts)
         else:
             texts = texts.split('.')
-        self.markov_model.fit(markov_text, state_size=markov_state_size)
+        self.markov_model.fit(markov_text, state_size=1)
 
         # Convert text to numerical representations
         sequences = self.tokenizer.texts_to_sequences(texts)
@@ -65,19 +65,27 @@ class ComboModel:
             raise Exception('The model does not exist yet')
 
     def load_model(self, path):
-        self.model = load_model(path)
+        if os.path.isdir(path):
+            h5_path = os.path.join(path, 'model.h5')
+            markov_path = os.path.join(path, 'markov.json')
+            self.model = load_model(h5_path)
+            self.markov_model.load_model(markov_path)
+        else:
+            raise Exception('Please pass in a folder to save the combo model')
+
 
     def predict(self, seed, num_chars=280, markov_every=2):
         if type(seed) == list:
             sentence = seed
         else:
-            sentence = list(seed)
+            sentence = [seed]
         count = 1
         sentence_length = len(' '.join(sentence))
         while sentence_length < num_chars:
             if count % (markov_every) == 0:
-                sentence.append(self.markov_model.predict_next_word(sentence))
+                sentence.append(self.markov_model.predict_next_word(sentence[-1]))
             else:
                 sentence.append(predict_next_word(seed, self.model, self.tokenizer))
             sentence_length = len(' '.join(sentence))
+            count += 1
         return ' '.join(sentence)
