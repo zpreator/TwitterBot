@@ -18,16 +18,18 @@ class MarkovModel:
         self.model = POSifiedText(sents, state_size=state_size)
 
     def save(self, path):
-        self.path = os.path.join(path, self.model_type + '.json')
-        save_json(self.path, self.model.to_json())
+        save_json(path, self.model.to_json())
 
     def load_model(self, path):
-        self.path = os.path.join(path, self.model_type + '.json')
-        self.model = POSifiedText.from_json(read_json(self.path))
+        self.model = POSifiedText.from_json(read_json(path))
 
     def predict(self, seed=None, num_chars=280):
         bot_tweet = self.model.make_short_sentence(num_chars)
         return bot_tweet
+
+    def predict_next_word(self, seed):
+        return self.model.make_sentence_with_start(' '.join(seed), max_words=(len(seed) + 1))
+
 
 
 class POSifiedText(markovify.Text):

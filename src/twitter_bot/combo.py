@@ -1,13 +1,30 @@
+import os
+
+from keras.layers import Embedding, GRU, Dense
+from keras.models import Sequential, load_model
+from keras.utils import pad_sequences, to_categorical
+from keras.callbacks import EarlyStopping
+
+from twitter_bot.markov import MarkovModel
+from twitter_bot.util import predict_next_word
 
 
 class ComboModel:
     def __init__(self, tokenizer):
         self.model = None
         self.path = None
+        self.markov_model = MarkovModel()
         self.vocab_size = len(tokenizer.word_index)
         self.tokenizer = tokenizer
 
-    def fit(self, texts, embedding_dim=128, rnn_units=256, batch_size=32, num_epochs=10):
+    def fit(self, texts, embedding_dim=50, rnn_units=150, batch_size=32, num_epochs=10, markov_state_size=2):
+        markov_text = texts
+        if type(texts) == list:
+            markov_text = '.'.join(texts)
+        else:
+            texts = texts.split('.')
+        self.markov_model.fit(markov_text, state_size=markov_state_size)
+
         # Convert text to numerical representations
         sequences = self.tokenizer.texts_to_sequences(texts)
 
@@ -23,8 +40,8 @@ class ComboModel:
 
         # define model
         self.model = Sequential()
-        self.model.add(Embedding(self.vocab_size, 50, input_length=30, trainable=True))
-        self.model.add(GRU(150, recurrent_dropout=0.1, dropout=0.1))
+        self.model.add(Embedding(self.vocab_size, embedding_dim, input_length=30, trainable=True))
+        self.model.add(GRU(rnn_units, recurrent_dropout=0.1, dropout=0.1))
         self.model.add(Dense(units=64, activation='relu'))
         self.model.add(Dense(self.vocab_size, activation='softmax'))
 
@@ -36,20 +53,31 @@ class ComboModel:
         self.model.fit(X, Y, batch_size=batch_size, epochs=num_epochs, callbacks=[early_stop])
 
     def save(self, path):
-        if '.h5' not in path:
-            path = path + '.h5'
-        self.path = path
         if self.model is not None:
-            self.model.save(path)
+            if os.path.isdir(path):
+                h5_path = os.path.join(path, 'model.h5')
+                markov_path = os.path.join(path, 'markov.json')
+                self.model.save(h5_path)
+                self.markov_model.save(markov_path)
+            else:
+                raise Exception('Please pass in a folder to save the combo model')
         else:
             raise Exception('The model does not exist yet')
 
     def load_model(self, path):
-        self.path = path
-        if '.h5' not in path:
-            self.path = path + '.h5'
-        self.model = load_model(self.path)
+        self.model = load_model(path)
 
-    def predict(self, seed=None, num_chars=280):
-        bot_tweet = generate_text(seed, self.model, self.tokenizer, num_chars=num_chars)
-        return bot_tweet
+    def predict(self, seed, num_chars=280, markov_every=2):
+        if type(seed) == list:
+            sentence = seed
+        else:
+            sentence = list(seed)
+        count = 1
+        sentence_length = len(' '.join(sentence))
+        while sentence_length < num_chars:
+            if count % (markov_every) == 0:
+                sentence.append(self.markov_model.predict_next_word(sentence))
+            else:
+                sentence.append(predict_next_word(seed, self.model, self.tokenizer))
+            sentence_length = len(' '.join(sentence))
+        return ' '.join(sentence)

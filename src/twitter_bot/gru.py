@@ -43,15 +43,13 @@ class GRUModel:
         self.model.fit(X, Y, batch_size=batch_size, epochs=num_epochs, callbacks=[early_stop])
 
     def save(self, path):
-        self.path = os.path.join(path, self.model_type + '.h5')
         if self.model is not None:
             self.model.save(path)
         else:
             raise Exception('The model does not exist yet')
 
     def load_model(self, path):
-        self.path = os.path.join(path, self.model_type + '.h5')
-        self.model = load_model(self.path)
+        self.model = load_model(path)
 
     def predict(self, seed=None, num_chars=280):
         bot_tweet = generate_text(seed, self.model, self.tokenizer, num_chars=num_chars)

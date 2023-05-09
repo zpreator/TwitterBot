@@ -14,7 +14,7 @@ class LSTMModel:
         self.vocab_size = len(tokenizer.word_index)
         self.tokenizer = tokenizer
 
-    def fit(self, texts, embedding_dim=128, rnn_units=256, batch_size=32, num_epochs=10):
+    def fit(self, texts, embedding_dim=64, rnn_units=128, batch_size=64, num_epochs=10):
         if type(texts) == str:
             texts = texts.split('.')
         # Convert text to numerical representations
@@ -34,6 +34,7 @@ class LSTMModel:
         self.model = Sequential([
             Embedding(self.vocab_size, embedding_dim),
             LSTM(rnn_units),
+            Dense(units=64, activation='relu'),
             Dense(self.vocab_size, activation='softmax')
         ])
 
@@ -44,15 +45,13 @@ class LSTMModel:
         self.model.fit(X, Y, batch_size=batch_size, epochs=num_epochs)
 
     def save(self, path):
-        self.path = os.path.join(path, self.model_type + '.h5')
         if self.model is not None:
             self.model.save(path)
         else:
             raise Exception('The model does not exist yet')
 
     def load_model(self, path):
-        self.path = os.path.join(path, self.model_type + '.h5')
-        self.model = load_model(self.path)
+        self.model = load_model(path)
 
     def predict(self, seed=None, num_chars=280):
         bot_tweet = generate_text(seed, self.model, self.tokenizer, num_chars=num_chars)

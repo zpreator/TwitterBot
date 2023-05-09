@@ -13,9 +13,8 @@ if __name__ == '__main__':
     print('Loading model...')
     bot.load_model('markov')
     print('Success!')
-    # print(bot.get_tweets())
     print('Tweeting...')
-    # bot.tweet_random_sentence(num_chars=np.random.choice(range(20, 280), size=1))
+    bot.tweet_random_sentence(num_chars=np.random.choice(range(20, 280), size=1))
     print('Success!')
 
     # Only train weekly on new tweets

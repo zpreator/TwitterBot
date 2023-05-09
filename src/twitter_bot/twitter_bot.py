@@ -1,68 +1,88 @@
 import os
 import numpy as np
+import tempfile
 
 from twitter_bot.util import load_tokenizer, save_tokenizer, load_txt, save_txt, get_tweet_text, tokenize
 from twitter_bot.config import create_twitter_api
 from twitter_bot.lstm import LSTMModel
 from twitter_bot.markov import MarkovModel
-
-PROJECT_PATH = os.path.split(os.path.split(os.path.split(__file__)[0])[0])[0]
-MODELS_FOLDER = os.path.join(PROJECT_PATH, 'resources', 'models')
-DATASETS_FOLDER = os.path.join(PROJECT_PATH, 'resources', 'datasets')
+from twitter_bot.gru import GRUModel
 
 
 class TwitterBot:
     def __init__(self,
                  user_id,
-                 model_name=None,
-                 char_level=False,
-                 consumer_key=None,
-                 consumer_secret=None,
+                 api_key=None,
+                 api_key_secret=None,
                  access_token=None,
                  access_token_secret=None):
-        self.api = create_twitter_api(consumer_key,
-                                      consumer_secret,
+        self.api = create_twitter_api(api_key,
+                                      api_key_secret,
                                       access_token,
                                       access_token_secret)
         self.user_id = user_id
-        self.char_level = char_level
         self.model = None
         self.tokenizer = None
-        if model_name is None:
-            model_name = user_id.replace('@', '')
-        self.model_name = model_name
-        self.model_path = os.path.join(MODELS_FOLDER, self.model_name)
-        os.makedirs(self.model_path, exist_ok=True)
-        self.tokenizer_path = os.path.join(self.model_path, 'tokenizer.pkl')
-        self.corpus_path = os.path.join(DATASETS_FOLDER, self.model_name + '.txt')
+        self.tokenizer_path = os.path.join(tempfile.gettempdir(), 'tokenizer.pkl')
+        self.corpus_path = os.path.join(tempfile.gettempdir(), self.user_id + '.txt')
 
     def __repr__(self):
-        return self.model_name
+        return f'{self.user_id} bot'
 
-    def load_model(self, model_type='markov'):
+    def load_model(self, model_path, model_type='markov'):
         self.tokenize()
-        if model_type == 'lstm':
+        if model_type.lower() == 'lstm':
             self.model = LSTMModel(self.tokenizer)
-        else:
+            ext = '.h5'
+        elif model_type.lower() == 'gru':
+            self.model = GRUModel(self.tokenizer)
+            ext = '.h5'
+        elif model_type.lower() == 'markov':
             self.model = MarkovModel()
-        try:
-            self.model.load_model(self.model_path)
-        except Exception:
-            raise Exception('The twitter bot must be trained before the model can be loaded')
+            ext = '.json'
+        else:
+            raise Exception('Please pass in either lstm, gru or markov')
+        if os.path.isdir(model_path):
+            found = False
+            for file in os.listdir(model_path):
+                if ext in os.path.splitext(file)[1].lower():
+                    model_path = os.path.join(model_path, file)
+                    if found:
+                        raise Exception(f'There are more than one files ending in {ext} in {model_path}')
+                    found = True
+            if not found:
+                raise Exception(f'There are no files ending in {ext} in {model_path}')
+        elif ext not in os.path.splitext(model_path):
+            raise Exception(f'model save_path must end in {ext} for {model_type} models. '
+                            'Alternatively, pass in a path to a folder containing the model')
+        self.model.load_model(model_path)
 
-    def train_model(self, pull_tweets=False, model_type='lstm', char_level=False, **kwargs):
-        text = self._get_text(pull_tweets)
+    def train_model(self, save_path, model_type='markov', pull_tweets=False,
+                    num_tweets=100, char_level=False, **kwargs):
+        text = self._get_text(pull_tweets=pull_tweets, num_tweets=num_tweets)
         self.tokenize(char_level=char_level)
-        if model_type == 'lstm':
+        if model_type.lower() == 'lstm':
             self.model = LSTMModel(self.tokenizer)
-        else:
+            ext = '.h5'
+        elif model_type.lower() == 'gru':
+            self.model = GRUModel(self.tokenizer)
+            ext = '.h5'
+        elif model_type.lower() == 'markov':
             self.model = MarkovModel()
+            ext = '.json'
+        else:
+            raise Exception('Please pass in either lstm, gru or markov')
         self.model.fit(text, **kwargs)
-        self.model.save(self.model_path)
+        if os.path.isdir(save_path):
+            save_path = os.path.join(save_path, f'{self.user_id.split("@")[1]}{ext}')
+        elif ext not in os.path.splitext(save_path):
+            raise Exception(f'model save_path must end in {ext} for {model_type} models. '
+                            'Alternatively, pass in a path to a folder')
+        self.model.save(save_path)
 
-    def _get_text(self, pull_tweets=False):
+    def _get_text(self, pull_tweets=False, num_tweets=100):
         if pull_tweets:
-            tweets = self.get_tweets()
+            tweets = self.get_tweets(num_tweets=num_tweets)
             text = '. '.join(tweets)
             save_txt(text, self.corpus_path)
         elif os.path.exists(self.corpus_path):
@@ -145,4 +165,4 @@ class TwitterBot:
         """
         sentence = self.generate_sentence(num_chars=num_chars, seed=seed)
         print(sentence)
-        self.api.update_status(sentence)
+        # self.api.update_status(sentence)
