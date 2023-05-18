@@ -260,5 +260,6 @@ def predict_next_word(seed, model, tokenizer, max_len=30):
     x = pad_sequences([input_seq], maxlen=max_len)
     y_pred = model.predict(x)[0]
     next_word_idx = np.random.choice(len(y_pred), size=1, p=y_pred)
+    next_word_idx += 1
     next_word = list(word_index.keys())[list(word_index.values()).index(next_word_idx)]
     return next_word

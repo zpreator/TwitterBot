@@ -18,11 +18,13 @@ class TwitterBot:
                  api_key_secret=None,
                  access_token=None,
                  access_token_secret=None):
-        self.api = create_twitter_api(api_key=api_key,
-                                      api_key_secret=api_key_secret,
-                                      access_token=access_token,
-                                      access_token_secret=access_token_secret,
-                                      keys_path=keys_path)
+        self.api = None
+        if not all([api_key is None, api_key_secret is None, access_token is None, access_token_secret is None]):
+            self.api = create_twitter_api(api_key=api_key,
+                                          api_key_secret=api_key_secret,
+                                          access_token=access_token,
+                                          access_token_secret=access_token_secret,
+                                          keys_path=keys_path)
         self.user_id = user_id
         self.model = None
         self.tokenizer = None
@@ -126,6 +128,8 @@ class TwitterBot:
         Returns:
             list[str]
         """
+        if self.api is None:
+            raise NotImplementedError('The api was not configured, please add the 4 keys when creating a TwitterBot object')
         return get_tweet_text(self.api, self.user_id, num_tweets=num_tweets)
 
     def generate_sentence(self, num_chars: int = 280, seed: str = None) -> str:
@@ -159,10 +163,13 @@ class TwitterBot:
 
         word_index = self.tokenizer.word_index
         next_word_idx = np.random.choice(len(list(word_index.values())), size=1)
+        next_word_idx += 1  # Because the tokenizer starts indices at 1 for some reason
         word = list(word_index.keys())[list(word_index.values()).index(next_word_idx)]
         return word
 
     def tweet(self, text):
+        if self.api is None:
+            raise NotImplementedError('The api was not configured, please add the 4 keys when creating a TwitterBot object')
         self.api.update_status(text)
 
     def tweet_random_sentence(self, seed: str = None, num_chars: int = 280) -> None:
@@ -177,4 +184,6 @@ class TwitterBot:
         """
         sentence = self.generate_sentence(num_chars=num_chars, seed=seed)
         print(sentence)
+        if self.api is None:
+            raise NotImplementedError('The api was not configured, please add the 4 keys when creating a TwitterBot object')
         self.api.update_status(sentence)

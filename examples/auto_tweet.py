@@ -14,7 +14,7 @@ if __name__ == '__main__':
     bot.load_model(model_path=r'C:\Users\zacha\PycharmProjects\TwitterBot\resources\models\laurarawra\markov.json', model_type='markov')
     print('Success!')
     print('Tweeting...')
-    bot.tweet_random_sentence(num_chars=np.random.choice(range(20, 280), size=1))
+    bot.tweet_random_sentence(num_chars=np.random.choice(range(100, 280), size=1))
     print('Success!')
 
     # Only train weekly on new tweets
