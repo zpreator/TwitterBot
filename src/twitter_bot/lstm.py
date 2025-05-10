@@ -15,8 +15,6 @@ class LSTMModel:
         self.tokenizer = tokenizer
 
     def fit(self, texts, embedding_dim=64, rnn_units=128, batch_size=64, num_epochs=10):
-        if type(texts) == str:
-            texts = texts.split('.')
         # Convert text to numerical representations
         sequences = self.tokenizer.texts_to_sequences(texts)
 

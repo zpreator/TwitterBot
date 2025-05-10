@@ -12,7 +12,8 @@ class MarkovModel:
         self.path = None
         self.markov_dict = None
 
-    def fit(self, text, state_size=2):
+    def fit(self, texts, state_size=2):
+        text = '. '.join(texts)
         doc = nlp(text_cleaner(text))
         sents = ' '.join([sent.text for sent in doc.sents if len(sent.text) > 1])
         self.model = POSifiedText(sents, state_size=state_size)

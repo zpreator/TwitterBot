@@ -2,6 +2,8 @@ import pickle
 import re
 import json
 import os
+
+import tweepy
 from keras.utils import pad_sequences
 from typing import List
 import numpy as np
@@ -33,6 +35,15 @@ def get_max_id(api, userID):
                                tweet_mode='extended'
                                )
     return tweet[-1].id
+
+
+def get_max_id_client(client, user_id):
+    # Replace with your own search query
+    query = f'from:{user_id}'
+
+    tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'],
+                                         max_results=1)
+    print(tweets)
 
 
 def query_user_tweets(api, userID, num_tweets=None, oldest_id=None):
@@ -79,13 +90,30 @@ def query_user_tweets(api, userID, num_tweets=None, oldest_id=None):
         max_id = oldest_id
         if not loop:
             break
+        print(f'\rTweets read: {len(all_tweets)}', end='')
+    print('')
     print('Tweets read: ', len(all_tweets))
     return all_tweets
 
 
+def get_user_tweets(client, user_id, num_tweets, oldest_id=None):
+    query = f'from:{user_id.replace("@", "")}'
+    tweets = client.search_recent_tweets(query=query, max_results=10)
+    # if num_tweets > 100:
+    #     tweets = []
+    #     for tweet in tweepy.Paginator(client.search_recent_tweets, query=query,
+    #                               tweet_fields=['context_annotations', 'created_at'], max_results=100).flatten(limit=num_tweets):
+    #         tweets.append(tweet)
+    # else:
+    #     tweets = client.search_recent_tweets(query=query, tweet_fields=['context_annotations', 'created_at'],
+    #                                          max_results=num_tweets)
+    return tweets
+
+
 def get_tweet_text(api, userID, num_tweets=50):
     tweets_text = []
-    tweets = query_user_tweets(api, userID, num_tweets)
+    # tweets = query_user_tweets(api, userID, num_tweets)
+    tweets = get_user_tweets(api, userID, num_tweets)
     for info in tweets:
         tweets_text.append(info.full_text)
     return tweets_text
@@ -219,13 +247,20 @@ def save_tokenizer(tokenizer, path):
 
 def load_txt(path):
     with open(path, 'r', encoding="utf-8") as file:
-        text = file.read()
-    return text
+        lines = file.readlines()
+    return lines
 
 
-def save_txt(text, path):
+def save_txt(lines, path):
     with open(path, 'w', encoding="utf-8") as file:
-        file.write(text)
+        file.writelines(lines)
+
+
+def append_to_corpus(lines, path):
+    existing_lines = load_txt(path)
+    total_lines = existing_lines + lines
+    lines = list(set(total_lines))
+    save_txt(lines, path)
 
 
 def tokenize(texts, vocab_size=10000, char_level=False):

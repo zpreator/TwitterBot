@@ -1,0 +1,4 @@
+.idea/
+resources/temp/
+__pycache__/
+tests/temp/
